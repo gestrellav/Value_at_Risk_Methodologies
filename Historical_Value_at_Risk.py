@@ -21,35 +21,41 @@ import matplotlib.pyplot as plt
 data = yf.download('MSFT', '2010-01-01', '2024-12-30')['Close']
 data = data.reset_index()
 data.rename(columns={'Close':'Price'}, inplace=True)
-data['Log_Return'] = np.log(data['Price']/data['Price'].shift(1))
-data.dropna(subset=['Log_Return'], inplace=True)
-data = data.reset_index(drop=True)
+data['Daily_Log_Return'] = np.log(data['Price']/data['Price'].shift(1))
 
-# Chart
-plt.hist(data['Log_Return'], bins=30,alpha=0.6, label='Microsoft Inc.', color='blue', edgecolor='black')
-plt.title('Histogramas Daily')
-plt.xlabel('Valores')
-plt.ylabel('Frecuencia')
+# Daily Histogram and Historical Value at Risk
+## Histogram
+plt.hist(data['Daily_Log_Return'].dropna(), bins=30,alpha=0.5, label='Microsoft Inc.', color='orange', edgecolor='orange')
+plt.title('Histogram')
+plt.xlabel('Values')
+plt.ylabel('Frecuency')
+plt.legend()
+plt.show()
+## Daily Value at Risk
+Daily_HVaR = np.percentile(data['Daily_Log_Return'].dropna(), (1 - 0.995) * 100)
+
+# Weekly Histogram and Historical Value at Risk
+data['Weekly_Log_Return'] = np.log(data['Price']/data['Price'].shift(5))
+plt.hist(data['Weekly_Log_Return'].dropna(), bins=30, alpha=0.6, label='Microsoft Inc.', color='skyblue', edgecolor='skyblue')
+plt.title('Histogram')
+plt.xlabel('Value')
+plt.ylabel('Frecuency')
 plt.legend()
 plt.show()
 
-var = np.percentile(data['Log_Return'], (1 - 0.995) * 100)
-var*np.sqrt(5)
+Weekly_HVaR = np.percentile(data['Weekly_Log_Return'].dropna(), (1 - 0.995) * 100)
 
-
-
-data['Log_Return_Week'] = data['Log_Return']*np.sqrt(5)
-
-plt.hist(data['Log_Return_Week'], bins=30,alpha=0.6, label='Microsoft Inc.', color='blue', edgecolor='black')
-plt.title('Histogramas Week')
-plt.xlabel('Valores')
-plt.ylabel('Frecuencia')
+# Merge Chart
+plt.hist(data['Daily_Log_Return'].dropna(), bins=30,alpha=0.5, label='Daily Log Returns', color='blue', edgecolor='blue')
+plt.hist(data['Weekly_Log_Return'].dropna(), bins=30, alpha=0.6, label='Weekly Log Returns', color='red', edgecolor='red')
+plt.title('Histogram')
+plt.xlabel('Values')
+plt.ylabel('Frecuency')
 plt.legend()
 plt.show()
 
 
-var_week = np.percentile(data['Log_Return_Week'], (1 - 0.995) * 100)
-
+# Function
 def historicalVaR(tickers, start_date, end_date, var_days_list, confidence_level):
     # Close Prices
     prices = yf.download(tickers, start=start_date, end=end_date)['Close']
@@ -79,8 +85,7 @@ def historicalVaR(tickers, start_date, end_date, var_days_list, confidence_level
 tickers = ['AMZN', 'AAPL', 'NVDA', 'TSLA', 'INTC', 'META', 'MSFT', 'GOOGL', 'JPM', 'NFLX', 'COST', 'BAC']
 start_date = '2010-01-01'
 end_date = '2024-12-30'
-var_days = [1, 2, 5, 22, 252]
+var_days = [1, 5, 22, 252]
 confidence_level = 0.995
 
-# One Ticker
 h_var = historicalVaR(tickers, start_date, end_date, var_days, confidence_level)
